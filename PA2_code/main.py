@@ -46,8 +46,8 @@ def compute_classifier_accuracy(classifier, data_loader):
     with torch.no_grad():
         for X, Y in data_loader:
             X, Y = X.to(globals.device), Y.to(globals.device)
-            outputs = classifier(X)
-            _, predicted = torch.max(outputs.data, 1)
+            outputs, _ = classifier(X)
+            _, predicted = torch.max(outputs, 1)
             total_correct += (predicted == Y).sum().item()
             total_samples += Y.size(0)
         accuracy = (100 * total_correct / total_samples)
@@ -80,24 +80,36 @@ def main():
     
     print("Loading data and creating tokenizer ...")
     # texts = load_texts('speechesdataset')
+    # load all sentences with labels
     texts = load_texts('./PA2_code/speechesdataset')
+    # create a simple tokenizer - each unique word has an embedding in a dictionary
     tokenizer = SimpleTokenizer(' '.join(texts)) # create a tokenizer from the data
     print("Vocabulary size is", tokenizer.vocab_size)
 
+    # training dataset
+    # convert the whole dataset into indices (encoding)
     train_CLS_dataset = SpeechesClassificationDataset(tokenizer, "./PA2_code/speechesdataset/train_CLS.tsv")
+    # split the encoded dataset (indices) into batches
     train_CLS_loader = DataLoader(train_CLS_dataset, batch_size=globals.batch_size, collate_fn=collate_batch,shuffle=True)
+    
+    # test dataset
+    test_CLS_dataset = SpeechesClassificationDataset(tokenizer, "./PA2_code/speechesdataset/test_CLS.tsv")
+    test_CLS_loader = DataLoader(test_CLS_dataset, batch_size=globals.batch_size, collate_fn=collate_batch,shuffle=True)
 
-    # encoder = EncoderModel(vocab_size = tokenizer.vocab_size, n_embd = globals.n_embd, block_size = globals.block_size, num_heads = globals.n_head, num_layers = globals.n_layer)
     classifier = NN1DAN(input_size = globals.n_input, tokenizer = tokenizer)
+    
     # inputfile = "speechesdataset/train_LM.txt"
     # with open(inputfile, 'r', encoding='utf-8') as f:
     #     lmtrainText = f.read()
     # train_LM_dataset = LanguageModelingDataset(tokenizer, lmtrainText,  block_size)
     # train_LM_loader = DataLoader(train_LM_dataset, batch_size=batch_size, shuffle=True)
 
-     # for the classification  task, you will train for a fixed number of epochs like this:
+    # for the classification  task, you will train for a fixed number of epochs like this:
+    # loss function to be used in training
     criterion = torch.nn.NLLLoss()
+    # used to update the weights
     optimizer = optim.Adam(list(classifier.parameters()), lr=globals.learning_rate)
+    print(f'number of classifier parameters: {len(list(classifier.parameters()))}')
 
     for epoch in range(globals.epochs_CLS):
         # i = 0
@@ -109,41 +121,38 @@ def main():
             # print(f'yb_shape: {yb.shape}')
             xb, yb = xb.to(globals.device), yb.to(globals.device)
             
+            # CLS training code here
             # Zero the parameter gradients
             optimizer.zero_grad() # reset gradients to 0.0
 
-            # CLS training code here
-            # embeddings = encoder(xb)
-            # print(embeddings)
-            
-            # To provide the embeddings to the classifier, use the mean of the embeddings across the sequence dimension
-            
-            
             outputs, attn_maps = classifier(xb)
             
-            # classifier.train()
-            # print(outputs)
-            
+            # Both components are trained simultaneously, enabling the encoder to learn representations that are specifically useful for the speech segment classification task.
             # Compute loss and backpropagate
-            loss = criterion(outputs, yb)
+            loss = criterion(outputs, yb) # compare predictions to labels to compute the loss according to the selected loss fn = NLL
             loss.backward() # -> compute gradients
-            optimizer.step() # -> update weights
+            optimizer.step() # -> update weights of both encoder and classifier at once - they are in the same object (inheriting from nn.Module)
 
             epoch_loss += loss.item()
 
-            # Logging the loss for each epoch
+        # Logging the loss and accuracy for each epoch
+        # TODO: correct implementation?
+        training_acc = compute_classifier_accuracy(classifier, train_CLS_loader)
+        test_acc = compute_classifier_accuracy(classifier, test_CLS_loader)
         
-        # training_acc = compute_classifier_accuracy(classifier, train_CLS_loader)
-        # compute_classifier_accuracy(classifier, test_)
-        
-        print(f'Epoch [{epoch+1}/{globals.epochs_CLS}], Loss: {epoch_loss / len(train_CLS_loader):.4f}')
-        # print(f'Epoch [{epoch+1}/{globals.epochs_CLS}], Loss: {epoch_loss / len(train_CLS_loader):.4f}, Training accuracy: {training_acc}')
-            # break
+        print(f'Epoch [{epoch+1}/{globals.epochs_CLS}], Loss: {epoch_loss / len(train_CLS_loader):.4f}, Training accuracy: {training_acc:.4f},  Test accuracy: {test_acc:.4f}')
+        # break
 
-    # sanity check
+    # sanity checks
+    utils = Utilities(tokenizer, classifier)
+    # sentence 1
     sen = train_CLS_dataset.samples[1][1]
     print(sen)
-    utils = Utilities(tokenizer, classifier)
+    utils.sanity_check(sen, globals.block_size)
+    
+    # sentence 2
+    sen = train_CLS_dataset.samples[2][1]
+    print(sen)
     utils.sanity_check(sen, globals.block_size)
     
     # # for the language modeling task, you will iterate over the training data for a fixed number of iterations like this:

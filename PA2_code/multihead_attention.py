@@ -17,16 +17,19 @@ class MultiHeadAttention(nn.Module):
         outputs = []
         attn_maps = []
         
+        # split input into chunks the same number of heads
         x_splits = torch.chunk(x, self.num_heads, dim=-1)
         
+        # send each chunk to its relevant head
         for head, x in zip(self.heads, x_splits):
             x, attn_map = head(x)
             attn_maps.append(attn_map)
             outputs.append(x)
         
-        # Concatenate all outputs
-        # concat_outputs = torch.cat(outputs, dim = -1)
+        # Concatenate all outputs into one tensor
         concat_outputs = torch.cat(outputs, dim=-1)
+        # pass through final layer
+        # TODO: why?
         final_output = self.proj(concat_outputs) # another layer
         
         return final_output, attn_maps
