@@ -13,6 +13,7 @@ class EncoderModel(nn.Module):
         # create a table of random word embeddings for all the vocab we have in the dataset
         self.token_embedding_table = nn.Embedding(vocab_size, n_embd)
         # create a table of random positional embeddings for all the word positions we have in the dataset block size
+        # TODO: should i change it?
         # TODO: normally, this should not be trainable but here it is random and trainable. should this also be ordered? -20, -10, 0, 10, 20? how?
         self.position_embedding_table = nn.Embedding(block_size, n_embd)
         self.blocks = nn.ModuleList([Block(n_embd, num_heads) for _ in range(num_layers)])

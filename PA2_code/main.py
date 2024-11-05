@@ -1,3 +1,4 @@
+import argparse
 import torch
 from torch.utils.data import DataLoader
 from torch.nn.utils.rnn import pad_sequence
@@ -77,6 +78,10 @@ def compute_perplexity(decoderLMmodel, data_loader, eval_iters=100):
     return perplexity
 
 def main():
+    
+    # Set up argument parser
+    part = getPartFromArgParser()
+    print(f'Part: {part}')
     
     print("Loading data and creating tokenizer ...")
     # texts = load_texts('speechesdataset')
@@ -162,8 +167,12 @@ def main():
     #     xb, yb = xb.to(device), yb.to(device)
     #     # LM training code here
 
-    
-
+def getPartFromArgParser(): 
+    parser = argparse.ArgumentParser(description='Run section based on specified assignment part')
+    parser.add_argument('--part', type=str, required=True, help='PA2 Section to run')
+    args = parser.parse_args()
+    part = args.part
+    return part
 
 
 if __name__ == "__main__":
