@@ -23,7 +23,12 @@ class NN1DAN(nn.Module):
         # print the number of parameters in the model
         print(f'Encoder parameters: {sum(p.numel() for p in self.encoder.parameters())}')
         
-        self.fc1 = nn.Linear(input_size, 3)
+        self.fc = nn.Sequential(
+            nn.Linear(input_size, globals.n_hidden),
+            nn.ReLU(),
+            nn.Linear(globals.n_hidden, globals.n_output),
+        )
+        
         self.log_softmax = nn.LogSoftmax(dim=1)
 
     def forward(self, x):
@@ -39,7 +44,6 @@ class NN1DAN(nn.Module):
         x = torch.mean(x, dim=1)
 
         # send through the network
-        # x = F.relu(self.fc1(x))
-        x = self.fc1(x)
+        x = self.fc(x)
         x = self.log_softmax(x)
         return x, attn_maps

@@ -20,7 +20,7 @@ eval_iters = 200  # Number of iterations to evaluate perplexity on the test set
 
 
 ## classifier training hyperparameters. It is a simple 1 hidden layer feedforward network, with input 
-## size of 64, hidden size of 50 and output size of 3.
+## size of 64, hidden size of 100 and output size of 3.
 
 n_input = 64  # Input size for the classifier, should match the embedding size of the transformer
 n_hidden = 100  # Hidden size for the classifier
