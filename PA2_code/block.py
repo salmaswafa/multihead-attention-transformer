@@ -6,10 +6,10 @@ from multihead_attention import MultiHeadAttention
 
 
 class Block(nn.Module):
-    def __init__(self, n_embd, num_heads):
+    def __init__(self, n_embd, num_heads, applyMasking = False):
         super().__init__()
         head_size = n_embd // num_heads
-        self.sa = MultiHeadAttention(num_heads = num_heads, head_size = head_size, d_model = n_embd)
+        self.sa = MultiHeadAttention(num_heads = num_heads, head_size = head_size, d_model = n_embd, applyMasking = applyMasking)
         # 
         self.ffwd = FeedForward(d_model = n_embd, hidden_size=globals.n_hidden)
         # TODO: understand why and where this happens

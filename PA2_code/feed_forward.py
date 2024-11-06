@@ -5,6 +5,9 @@ class FeedForward(nn.Module):
 
     Args:
     """
+    # TODO: video has one linear and one relu only. why is there a second one here? should it have an activation after the last one?
+    # nn.Linear(d_model, d_model),
+    # nn.ReLU(),
     def __init__(self, d_model, hidden_size):
         super().__init__()
         self.net = nn.Sequential(

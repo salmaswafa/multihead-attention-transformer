@@ -4,11 +4,11 @@ from head import Head
 
 
 class MultiHeadAttention(nn.Module):
-    def __init__(self, num_heads, head_size, d_model):
+    def __init__(self, num_heads, head_size, d_model, applyMasking = False):
         # d_model = size of the embedding dimension
         super().__init__()
         self.num_heads = num_heads
-        self.heads = nn.ModuleList([Head(head_size, d_model) for _ in range(num_heads)])
+        self.heads = nn.ModuleList([Head(head_size, d_model, applyMasking = applyMasking) for _ in range(num_heads)])
         self.proj = nn.Linear(head_size * num_heads, d_model)
     
     def forward(self, x):
