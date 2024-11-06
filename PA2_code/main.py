@@ -145,9 +145,8 @@ def main():
             test_acc = compute_classifier_accuracy(classifier, test_CLS_loader)
             
             print(f'Epoch [{epoch+1}/{globals.epochs_CLS}], Loss: {epoch_loss / len(train_CLS_loader):.4f}, Training accuracy: {training_acc:.4f},  Test accuracy: {test_acc:.4f}')
-            # break
 
-        runSanityChecks(tokenizer, classifier, train_CLS_dataset)
+        runSanityChecks(tokenizer, classifier, globals.encoder_sentences)
         
     # Part 2: Decoder 
     elif part == 2:
@@ -191,12 +190,7 @@ def main():
         print(f'Test (W Bush): Perpelxity after {i} iterations: {compute_perplexity(decoder, test_LM_wbush_loader):.4f}')
         print(f'Test (H Bush): Perpelxity after {i} iterations: {compute_perplexity(decoder, test_LM_hbush_loader):.4f}')
         
-        
-        
-        # runSanityChecks(tokenizer, decoder, train_LM_dataset)
-
-            
-            
+        runSanityChecks(tokenizer, decoder, globals.decoder_sentences, isDecoder = True)
 
 def getPartFromArgParser(): 
     parser = argparse.ArgumentParser(description='Run section based on specified assignment part')
@@ -217,18 +211,14 @@ def createDatasetAndLoader(input_file, tokenizer):
     
     return dataset, loader
 
-def runSanityChecks(tokenizer, model, dataset):
+def runSanityChecks(tokenizer, model, sentence_list, isDecoder = False):
     # sanity checks
     utils = Utilities(tokenizer, model)
-    # sentence 1
-    sen = dataset.samples[1][1]
-    print(sen)
-    utils.sanity_check(sen, globals.block_size)
     
-    # sentence 2
-    sen = dataset.samples[2][1]
-    print(sen)
-    utils.sanity_check(sen, globals.block_size)
+    for i in range(len(sentence_list)):
+        sen = sentence_list[i]
+        print(sen)
+        utils.sanity_check(sen, globals.block_size, isDecoder = isDecoder)
 
 if __name__ == "__main__":
     main()

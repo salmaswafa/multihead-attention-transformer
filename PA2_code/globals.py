@@ -28,3 +28,11 @@ n_input = 64  # Input size for the classifier, should match the embedding size o
 n_hidden = 100  # Hidden size for the classifier
 n_output = 3  # Output size for the classifier, we have 3 classes
 epochs_CLS = 15 # epochs for classifier training
+
+# TODO: okay to do this?
+# Sanity check sentences
+# Part 1
+encoder_sentences = ["That's how progress happens -- in societies and in our own lives.", "But we should choose the right path, not just the easy path."]
+
+# Part 2
+decoder_sentences = ["Our relations abroad were strained.", "And today, as my call for a time frame to remove our troops from Iraq has been echoed by the Iraqi government and even the Bush Administration, even after we learned that Iraq has a $79 billion surplus while we're wallowing in deficits, John McCain stands alone in his stubborn refusal to end a misguided war."]

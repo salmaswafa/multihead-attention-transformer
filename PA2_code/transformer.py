@@ -20,9 +20,6 @@ class EncoderModel(nn.Module):
         self.blocks = nn.ModuleList([Block(n_embd, num_heads) for _ in range(num_layers)])
         self.ln_f = nn.LayerNorm(n_embd)
         
-        # TODO: remove
-        print(f'emb of word of index 2: {self.token_embedding_table(torch.tensor([2]))}')
-        
     def forward(self, idx, targets = None):
         B, T = idx.shape
         

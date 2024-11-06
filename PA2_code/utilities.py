@@ -7,7 +7,7 @@ class Utilities:
         self.tokenizer = tokenizer
         self.model = model
 
-    def sanity_check(self, sentence, block_size):
+    def sanity_check(self, sentence, block_size, isDecoder = False):
         # Encode the sentence using the tokenizer
         wordids = self.tokenizer.encode(sentence)
 
@@ -19,7 +19,11 @@ class Utilities:
         print("Input tensor shape:", input_tensor.shape)
 
         # Process the input tensor through the encoder model
-        _,  attn_maps = self.model(input_tensor) # Ignore the output of the model, and only get the attention maps; make sure your encoder returns the attention maps
+        # Ignore the output of the model, and only get the attention maps; make sure your encoder returns the attention maps
+        if isDecoder:
+            _, _, attn_maps = self.model(input_tensor)
+        else:
+            _, attn_maps = self.model(input_tensor)
 
         # Display the number of attention maps
         print("Number of attention maps:", len(attn_maps))
