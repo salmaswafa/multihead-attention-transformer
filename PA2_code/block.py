@@ -6,13 +6,12 @@ from multihead_attention import MultiHeadAttention
 
 
 class Block(nn.Module):
-    def __init__(self, n_embd, num_heads, applyMasking = False):
+    def __init__(self, n_embd, num_heads, applyMasking = False, applyAlibi = False):
         super().__init__()
         head_size = n_embd // num_heads
-        self.sa = MultiHeadAttention(num_heads = num_heads, head_size = head_size, d_model = n_embd, applyMasking = applyMasking)
+        self.sa = MultiHeadAttention(num_heads = num_heads, head_size = head_size, d_model = n_embd, applyMasking = applyMasking, applyAlibi = applyAlibi)
         # 
         self.ffwd = FeedForward(d_model = n_embd, hidden_size=globals.n_hidden)
-        # TODO: understand why and where this happens
         self.ln1 = nn.LayerNorm(n_embd)
         self.ln2 = nn.LayerNorm(n_embd)
         
@@ -21,9 +20,6 @@ class Block(nn.Module):
         x_ln1 = self.ln1(x)
         # send to multi-head attention
         sa_out, attn_maps = self.sa(x_ln1)
-        # TODO: WHY ARE WE ADDING BELOW? Diagram says "Add & Norm" after multi-head and after ffwd - but why?
-        # TODO: UNDERSTAND THE PART ABOUT: FEEDFORWARD LAYERS APPLIED TO EACH TOKEN INDIVIDUALLY
-        # TODO: WHAT DOES THIS FFWD DO?
         x = x + sa_out
         x = x + self.ffwd(self.ln2(x))
         return x, attn_maps

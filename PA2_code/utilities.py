@@ -15,9 +15,6 @@ class Utilities:
         padded_sentence = wordids[:block_size] + [0] * (block_size - len(wordids))
         input_tensor = torch.tensor(padded_sentence, dtype=torch.long).unsqueeze(0)
 
-        # Display input tensor shape
-        print("Input tensor shape:", input_tensor.shape)
-
         # Process the input tensor through the encoder model
         # Ignore the output of the model, and only get the attention maps; make sure your encoder returns the attention maps
         if isDecoder:
@@ -32,13 +29,6 @@ class Utilities:
         for j, attn_map in enumerate(attn_maps):
             
             attn_map = attn_map[0] # choosing the firs head
-            # breakpoint()
-            print(attn_map.shape)
-            
-            # 1. squezee attn_map
-            
-            # 2. change this line
-            # total_prob_over_rows = torch.sum(attn_map[0], dim=-1)
             
             att_map = attn_map.squeeze(0).detach().cpu().numpy()  # Remove batch dimension and convert to NumPy array
 

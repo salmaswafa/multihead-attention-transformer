@@ -14,8 +14,7 @@ class EncoderModel(nn.Module):
         # create a table of random word embeddings for all the vocab we have in the dataset
         self.token_embedding_table = nn.Embedding(vocab_size, n_embd)
         # create a table of random positional embeddings for all the word positions we have in the dataset block size
-        # TODO: should i change it?
-        # TODO: normally, this should not be trainable but here it is random and trainable. should this also be ordered? -20, -10, 0, 10, 20? how?
+        # normally, this should not be trainable but here it is random and trainable
         self.position_embedding_table = nn.Embedding(block_size, n_embd)
         self.blocks = nn.ModuleList([Block(n_embd, num_heads) for _ in range(num_layers)])
         self.ln_f = nn.LayerNorm(n_embd)
@@ -43,16 +42,15 @@ class EncoderModel(nn.Module):
         return x, attn_maps
     
 class DecoderModel(nn.Module):
-    def __init__(self, vocab_size, n_embd, block_size, num_heads, num_layers):
+    def __init__(self, vocab_size, n_embd, block_size, num_heads, num_layers, applyAlibi = False):
         super().__init__()  # Initialize nn.Module
+        self.applyAlibi = applyAlibi
         # Generates random embedding vectors for each token
         # create a table of random word embeddings for all the vocab we have in the dataset
         self.token_embedding_table = nn.Embedding(vocab_size, n_embd)
         # create a table of random positional embeddings for all the word positions we have in the dataset block size
-        # TODO: should i change it?
-        # TODO: normally, this should not be trainable but here it is random and trainable. should this also be ordered? -20, -10, 0, 10, 20? how?
         self.position_embedding_table = nn.Embedding(block_size, n_embd)
-        self.blocks = nn.ModuleList([Block(n_embd, num_heads, applyMasking = True) for _ in range(num_layers)])
+        self.blocks = nn.ModuleList([Block(n_embd, num_heads, applyMasking = True, applyAlibi = applyAlibi) for _ in range(num_layers)])
         self.ln_f = nn.LayerNorm(n_embd)
         self.lm_head = nn.Linear(n_embd, vocab_size)
         
@@ -61,11 +59,16 @@ class DecoderModel(nn.Module):
         
         # get token embeddings of the words from the table using the indices
         tok_emb = self.token_embedding_table(idx)
-        # get positional embeddings of the words from the table using the indices
-        pos_emb = self.position_embedding_table(torch.arange(T, device = globals.device))
         
-        # add both together for the final embedding - word meaning + position (for better context)
-        x = tok_emb + pos_emb
+        if not self.applyAlibi:
+            # get positional embeddings of the words from the table using the indices
+            pos_emb = self.position_embedding_table(torch.arange(T, device = globals.device))
+            
+            # add both together for the final embedding - word meaning + position (for better context)
+            x = tok_emb + pos_emb
+        else:
+            x = tok_emb
+            
         attn_maps = []
         
         # send to each block
@@ -86,12 +89,4 @@ class DecoderModel(nn.Module):
             targets = targets.view(B*T)
             loss = F.cross_entropy(logits, targets)
 
-            # print('DECODER OUTPUT')
-            # print(logits.shape)
-            
-            # print('ACTUAL OUTPUT')
-            # print(targets.shape)
-
         return logits, loss, attn_maps
-        
-        # return x, attn_maps

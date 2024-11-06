@@ -11,8 +11,8 @@ import numpy as np
 from transformer import EncoderModel
 
 # TODO: assignment says 1 layer but there is a hidden size in the globals
+# add relu and another layer
 # Two-layer fully connected neural network
-# TODO: is it indeed a DAN?
 class NN1DAN(nn.Module):
     def __init__(self, input_size, tokenizer):
         super().__init__()
@@ -31,9 +31,9 @@ class NN1DAN(nn.Module):
         # x = x.long()
         # x = self.embeddings(x)
         
-        # TODO: check -> input to encoder: indices of words in batch
+        # input to encoder: indices of words in batch
         x, attn_maps = self.encoder(x)
-        # TODO: check -> output from encoder is the heavily processs, contextualized version of the word vectors (input tokens)
+        # output from encoder is the heavily processs, contextualized version of the word vectors (input tokens)
         # Input and output shapes are identical
         
         # To provide the embeddings to the classifier, use the mean of the embeddings across the sequence dimension
@@ -41,7 +41,6 @@ class NN1DAN(nn.Module):
         x = torch.mean(x, dim=1)
 
         # send through the network
-        # TODO: NEED GeLU or ReLU here? Better to add?
         # x = F.relu(self.fc1(x))
         x = self.fc1(x)
         x = self.log_softmax(x)

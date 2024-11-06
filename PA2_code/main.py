@@ -80,7 +80,7 @@ def main():
     # Set up argument parser
     part = int(getPartFromArgParser())
     print(f'Part: {part}')
-    # part = 2
+    # part = 3
     
     # Load dataset
     print("Loading data and creating tokenizer ...")
@@ -94,103 +94,15 @@ def main():
 
     # Part 1: Classifier
     if part == 1:
-        # training dataset
-        # convert the whole dataset into indices (encoding)
-        train_CLS_dataset = SpeechesClassificationDataset(tokenizer, "./PA2_code/speechesdataset/train_CLS.tsv")
-        # split the encoded dataset (indices) into batches
-        train_CLS_loader = DataLoader(train_CLS_dataset, batch_size=globals.batch_size, collate_fn=collate_batch,shuffle=True)
-        
-        # test dataset
-        test_CLS_dataset = SpeechesClassificationDataset(tokenizer, "./PA2_code/speechesdataset/test_CLS.tsv")
-        test_CLS_loader = DataLoader(test_CLS_dataset, batch_size=globals.batch_size, collate_fn=collate_batch,shuffle=True)
-
-        classifier = NN1DAN(input_size = globals.n_input, tokenizer = tokenizer)
-        
-        # print the number of parameters in the model
-        print(f'Classifier parameters: {sum(p.numel() for p in classifier.parameters())}')
-
-        # for the classification  task, you will train for a fixed number of epochs like this:
-        # loss function to be used in training
-        criterion = torch.nn.NLLLoss()
-        # used to update the weights
-        optimizer = optim.Adam(list(classifier.parameters()), lr=globals.learning_rate)
-
-        for epoch in range(globals.epochs_CLS):
-            # i = 0
-            epoch_loss = 0.0
-            for xb, yb in train_CLS_loader:
-                # print(i + 1)
-                # i += 1
-                # print(f'xb_shape: {xb.shape}')
-                # print(f'yb_shape: {yb.shape}')
-                xb, yb = xb.to(globals.device), yb.to(globals.device)
-                
-                # CLS training code here
-                # Zero the parameter gradients
-                optimizer.zero_grad() # reset gradients to 0.0
-
-                outputs, attn_maps = classifier(xb)
-                
-                # Both components are trained simultaneously, enabling the encoder to learn representations that are specifically useful for the speech segment classification task.
-                # Compute loss and backpropagate
-                loss = criterion(outputs, yb) # compare predictions to labels to compute the loss according to the selected loss fn = NLL
-                loss.backward() # -> compute gradients
-                optimizer.step() # -> update weights of both encoder and classifier at once - they are in the same object (inheriting from nn.Module)
-
-                epoch_loss += loss.item()
-
-            # Logging the loss and accuracy for each epoch
-            # TODO: correct implementation?
-            training_acc = compute_classifier_accuracy(classifier, train_CLS_loader)
-            test_acc = compute_classifier_accuracy(classifier, test_CLS_loader)
-            
-            print(f'Epoch [{epoch+1}/{globals.epochs_CLS}], Loss: {epoch_loss / len(train_CLS_loader):.4f}, Training accuracy: {training_acc:.4f},  Test accuracy: {test_acc:.4f}')
-
-        runSanityChecks(tokenizer, classifier, globals.encoder_sentences)
+       part1(tokenizer=tokenizer)
         
     # Part 2: Decoder 
     elif part == 2:
-        # training
-        train_LM_dataset, train_LM_loader = createDatasetAndLoader(input_file = "./PA2_code/speechesdataset/train_LM.txt", tokenizer = tokenizer)
+        part2(tokenizer=tokenizer)
+    
+    elif part == 3:
+        part2(tokenizer=tokenizer, applyAlibi = True)
         
-        # test
-        test_LM_obama_dataset, test_LM_obama_loader = createDatasetAndLoader(input_file = "./PA2_code/speechesdataset/test_LM_obama.txt", tokenizer = tokenizer)
-        test_LM_wbush_dataset, test_LM_wbush_loader = createDatasetAndLoader(input_file = "./PA2_code/speechesdataset/test_LM_wbush.txt", tokenizer = tokenizer)
-        test_LM_hbush_dataset, test_LM_hbush_loader = createDatasetAndLoader(input_file = "./PA2_code/speechesdataset/test_LM_hbush.txt", tokenizer = tokenizer)
-        
-        print('Done creating all datasets and loaders')
-        
-        decoder = DecoderModel(vocab_size = tokenizer.vocab_size, n_embd = globals.n_embd, block_size = globals.block_size, num_heads = globals.n_head, num_layers = globals.n_layer)
-        
-        # print the number of parameters in the model
-        print(f'Decoder parameters: {sum(p.numel() for p in decoder.parameters())}')
-        
-        # used to update the weights
-        optimizer = optim.Adam(list(decoder.parameters()), lr=globals.learning_rate)
-        
-        # for the language modeling task, you will iterate over the training data for a fixed number of iterations like this:
-        for i, (xb, yb) in enumerate(train_LM_loader):
-            # print(f'xb shape: {xb.shape}')
-            # print(f'yb shape: {yb.shape}')
-            if i >= globals.max_iters:
-                break
-            xb, yb = xb.to(globals.device), yb.to(globals.device)
-            # LM training code here
-            optimizer.zero_grad() # reset gradients to 0.0
-            outputs, loss, attn_maps = decoder(xb, yb)
-            
-            loss.backward() # -> compute gradients
-            optimizer.step() # -> update weights of both encoder and classifier at once - they are in the same object (inheriting from nn.Module)
-            
-            if i%100 == 0 or i == globals.max_iters-1: 
-                print(f'Training: Perpelxity after {i} iterations: {compute_perplexity(decoder, train_LM_loader):.4f}')
-                print('\n')
-        
-        print(f'Test (Obama): Perpelxity after {i} iterations: {compute_perplexity(decoder, test_LM_obama_loader):.4f}')
-        print(f'Test (W Bush): Perpelxity after {i} iterations: {compute_perplexity(decoder, test_LM_wbush_loader):.4f}')
-        print(f'Test (H Bush): Perpelxity after {i} iterations: {compute_perplexity(decoder, test_LM_hbush_loader):.4f}')
-        
-        runSanityChecks(tokenizer, decoder, globals.decoder_sentences, isDecoder = True)
 
 def getPartFromArgParser(): 
     parser = argparse.ArgumentParser(description='Run section based on specified assignment part')
@@ -219,6 +131,99 @@ def runSanityChecks(tokenizer, model, sentence_list, isDecoder = False):
         sen = sentence_list[i]
         print(sen)
         utils.sanity_check(sen, globals.block_size, isDecoder = isDecoder)
+
+def part1(tokenizer):
+    # training dataset
+    # convert the whole dataset into indices (encoding)
+    train_CLS_dataset = SpeechesClassificationDataset(tokenizer, "./PA2_code/speechesdataset/train_CLS.tsv")
+    # split the encoded dataset (indices) into batches
+    train_CLS_loader = DataLoader(train_CLS_dataset, batch_size=globals.batch_size, collate_fn=collate_batch,shuffle=True)
+    
+    # test dataset
+    test_CLS_dataset = SpeechesClassificationDataset(tokenizer, "./PA2_code/speechesdataset/test_CLS.tsv")
+    test_CLS_loader = DataLoader(test_CLS_dataset, batch_size=globals.batch_size, collate_fn=collate_batch,shuffle=True)
+
+    classifier = NN1DAN(input_size = globals.n_input, tokenizer = tokenizer)
+    
+    # print the number of parameters in the model
+    print(f'Classifier parameters: {sum(p.numel() for p in classifier.parameters())}')
+
+    # for the classification  task, you will train for a fixed number of epochs like this:
+    # loss function to be used in training
+    criterion = torch.nn.NLLLoss()
+    # used to update the weights
+    optimizer = optim.Adam(list(classifier.parameters()), lr=globals.learning_rate)
+
+    runSanityChecks(tokenizer, classifier, globals.encoder_sentences)
+
+    for epoch in range(globals.epochs_CLS):
+        # i = 0
+        epoch_loss = 0.0
+        for xb, yb in train_CLS_loader:
+            xb, yb = xb.to(globals.device), yb.to(globals.device)
+            
+            # CLS training code here
+            # Zero the parameter gradients
+            optimizer.zero_grad() # reset gradients to 0.0
+
+            outputs, attn_maps = classifier(xb)
+            
+            # Both components are trained simultaneously, enabling the encoder to learn representations that are specifically useful for the speech segment classification task.
+            # Compute loss and backpropagate
+            loss = criterion(outputs, yb) # compare predictions to labels to compute the loss according to the selected loss fn = NLL
+            loss.backward() # -> compute gradients
+            optimizer.step() # -> update weights of both encoder and classifier at once - they are in the same object (inheriting from nn.Module)
+
+            epoch_loss += loss.item()
+
+        # Logging the loss and accuracy for each epoch
+        training_acc = compute_classifier_accuracy(classifier, train_CLS_loader)
+        test_acc = compute_classifier_accuracy(classifier, test_CLS_loader)
+        
+        print(f'Epoch [{epoch+1}/{globals.epochs_CLS}], Loss: {epoch_loss / len(train_CLS_loader):.4f}, Training accuracy: {training_acc:.4f},  Test accuracy: {test_acc:.4f}')
+
+    runSanityChecks(tokenizer, classifier, globals.encoder_sentences)
+
+def part2(tokenizer, applyAlibi = False):
+    # training
+    train_LM_dataset, train_LM_loader = createDatasetAndLoader(input_file = "./PA2_code/speechesdataset/train_LM.txt", tokenizer = tokenizer)
+    
+    # test
+    test_LM_obama_dataset, test_LM_obama_loader = createDatasetAndLoader(input_file = "./PA2_code/speechesdataset/test_LM_obama.txt", tokenizer = tokenizer)
+    test_LM_wbush_dataset, test_LM_wbush_loader = createDatasetAndLoader(input_file = "./PA2_code/speechesdataset/test_LM_wbush.txt", tokenizer = tokenizer)
+    test_LM_hbush_dataset, test_LM_hbush_loader = createDatasetAndLoader(input_file = "./PA2_code/speechesdataset/test_LM_hbush.txt", tokenizer = tokenizer)
+    
+    print('Done creating all datasets and loaders')
+    
+    decoder = DecoderModel(vocab_size = tokenizer.vocab_size, n_embd = globals.n_embd, block_size = globals.block_size, num_heads = globals.n_head, num_layers = globals.n_layer, applyAlibi = applyAlibi)
+    
+    # print the number of parameters in the model
+    print(f'Decoder parameters: {sum(p.numel() for p in decoder.parameters())}')
+    
+    # used to update the weights
+    optimizer = optim.Adam(list(decoder.parameters()), lr=globals.learning_rate)
+    
+    # for the language modeling task, you will iterate over the training data for a fixed number of iterations like this:
+    for i, (xb, yb) in enumerate(train_LM_loader):
+        if i >= globals.max_iters:
+            break
+        xb, yb = xb.to(globals.device), yb.to(globals.device)
+        # LM training code here
+        optimizer.zero_grad() # reset gradients to 0.0
+        outputs, loss, attn_maps = decoder(xb, yb)
+        
+        loss.backward() # -> compute gradients
+        optimizer.step() # -> update weights of both encoder and classifier at once - they are in the same object (inheriting from nn.Module)
+        
+        if i%100 == 0 or i == globals.max_iters-1: 
+            print(f'Training: Perpelxity after {i} iterations: {compute_perplexity(decoder, train_LM_loader):.4f}')
+            print('\n')
+    
+    print(f'Test (Obama): Perpelxity after {i} iterations: {compute_perplexity(decoder, test_LM_obama_loader):.4f}')
+    print(f'Test (W Bush): Perpelxity after {i} iterations: {compute_perplexity(decoder, test_LM_wbush_loader):.4f}')
+    print(f'Test (H Bush): Perpelxity after {i} iterations: {compute_perplexity(decoder, test_LM_hbush_loader):.4f}')
+    
+    runSanityChecks(tokenizer, decoder, globals.decoder_sentences, isDecoder = True)
 
 if __name__ == "__main__":
     main()

@@ -1,5 +1,3 @@
-# TODO: make all objects/ classes use these and dont send them as parameters
-
 import torch
 
 seed = 42
@@ -29,7 +27,6 @@ n_hidden = 100  # Hidden size for the classifier
 n_output = 3  # Output size for the classifier, we have 3 classes
 epochs_CLS = 15 # epochs for classifier training
 
-# TODO: okay to do this?
 # Sanity check sentences
 # Part 1
 encoder_sentences = ["That's how progress happens -- in societies and in our own lives.", "But we should choose the right path, not just the easy path."]
