@@ -28,8 +28,6 @@ class NN1DAN(nn.Module):
 
     def forward(self, x):
         # convert input into long and get embeddings
-        # x = x.long()
-        # x = self.embeddings(x)
         
         # input to encoder: indices of words in batch
         x, attn_maps = self.encoder(x)

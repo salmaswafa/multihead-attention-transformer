@@ -8,10 +8,9 @@ class Head(nn.Module):
     def __init__(self, head_size, d_model, applyMasking = False, applyAlibi = False):
         super().__init__()
         # d_model = size of the embedding dimension
-        # TODO: change 32 to d_model // num_heads
-        self.query = nn.Linear(32, head_size, bias = False)
-        self.key = nn.Linear(32, head_size, bias = False)
-        self.value = nn.Linear(32, head_size, bias = False)
+        self.query = nn.Linear(head_size, head_size, bias = False)
+        self.key = nn.Linear(head_size, head_size, bias = False)
+        self.value = nn.Linear(head_size, head_size, bias = False)
         self.applyMasking = applyMasking
         self.register_buffer('tril', torch.tril(torch.ones(globals.block_size, globals.block_size)))
         
