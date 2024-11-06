@@ -78,9 +78,9 @@ def main():
     
     # TODO: change back
     # Set up argument parser
-    # part = int(getPartFromArgParser())
-    # print(f'Part: {part}')
-    part = 2
+    part = int(getPartFromArgParser())
+    print(f'Part: {part}')
+    # part = 2
     
     # Load dataset
     print("Loading data and creating tokenizer ...")
@@ -105,13 +105,15 @@ def main():
         test_CLS_loader = DataLoader(test_CLS_dataset, batch_size=globals.batch_size, collate_fn=collate_batch,shuffle=True)
 
         classifier = NN1DAN(input_size = globals.n_input, tokenizer = tokenizer)
+        
+        # print the number of parameters in the model
+        print(f'Classifier parameters: {sum(p.numel() for p in classifier.parameters())}')
 
         # for the classification  task, you will train for a fixed number of epochs like this:
         # loss function to be used in training
         criterion = torch.nn.NLLLoss()
         # used to update the weights
         optimizer = optim.Adam(list(classifier.parameters()), lr=globals.learning_rate)
-        print(f'number of classifier parameters: {len(list(classifier.parameters()))}')
 
         for epoch in range(globals.epochs_CLS):
             # i = 0
@@ -160,8 +162,10 @@ def main():
         print('Done creating all datasets and loaders')
         
         decoder = DecoderModel(vocab_size = tokenizer.vocab_size, n_embd = globals.n_embd, block_size = globals.block_size, num_heads = globals.n_head, num_layers = globals.n_layer)
-        # should this be cross entropy?
-        criterion = torch.nn.CrossEntropyLoss()
+        
+        # print the number of parameters in the model
+        print(f'Decoder parameters: {sum(p.numel() for p in decoder.parameters())}')
+        
         # used to update the weights
         optimizer = optim.Adam(list(decoder.parameters()), lr=globals.learning_rate)
         
@@ -176,24 +180,19 @@ def main():
             optimizer.zero_grad() # reset gradients to 0.0
             outputs, loss, attn_maps = decoder(xb, yb)
             
-            # print('DECODER OUTPUT')
-            # print(outputs.shape)
-            
-            # print('ACTUAL OUTPUT')
-            # print(yb.shape)
-            
-            # loss = criterion(outputs, yb) # compare predictions to labels to compute the loss according to the selected loss fn = NLL
             loss.backward() # -> compute gradients
             optimizer.step() # -> update weights of both encoder and classifier at once - they are in the same object (inheriting from nn.Module)
-            # break
             
-            if (i + 1)%100 == 0 or i == 499: 
-                print(f'Training: Perpelxity after {i + 1} iterations: {compute_perplexity(decoder, train_LM_loader):.4f}')
+            if i%100 == 0 or i == globals.max_iters-1: 
+                print(f'Training: Perpelxity after {i} iterations: {compute_perplexity(decoder, train_LM_loader):.4f}')
                 print('\n')
         
         print(f'Test (Obama): Perpelxity after {i} iterations: {compute_perplexity(decoder, test_LM_obama_loader):.4f}')
         print(f'Test (W Bush): Perpelxity after {i} iterations: {compute_perplexity(decoder, test_LM_wbush_loader):.4f}')
         print(f'Test (H Bush): Perpelxity after {i} iterations: {compute_perplexity(decoder, test_LM_hbush_loader):.4f}')
+        
+        
+        
         # runSanityChecks(tokenizer, decoder, train_LM_dataset)
 
             

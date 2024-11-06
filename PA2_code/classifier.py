@@ -20,12 +20,9 @@ class NN1DAN(nn.Module):
         # [16,300] - since they are batches of 16 and the vector dimension is 300
         self.encoder = EncoderModel(vocab_size = tokenizer.vocab_size, n_embd = globals.n_embd, block_size = globals.block_size, num_heads = globals.n_head, num_layers = globals.n_layer)
         
-        # TODO: change to what is on piazza
-        # classifier = Classifier(tokenizer.vocab_size).to(device)
-        # total_params = sum(p.numel() for p in classifier.encoder.parameters() if p.requires_grad)
-        # print(f'Total number of parameters in encoder: {total_params}')
+        # print the number of parameters in the model
+        print(f'Encoder parameters: {sum(p.numel() for p in self.encoder.parameters())}')
         
-        print(f'number of encoder parameters: {len(list(self.encoder.parameters()))}')    
         self.fc1 = nn.Linear(input_size, 3)
         self.log_softmax = nn.LogSoftmax(dim=1)
 
