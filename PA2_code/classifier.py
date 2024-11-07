@@ -10,7 +10,6 @@ import globals
 import numpy as np
 from transformer import EncoderModel
 
-# TODO: assignment says 1 layer but there is a hidden size in the globals
 # add relu and another layer
 # Two-layer fully connected neural network
 class NN1DAN(nn.Module):

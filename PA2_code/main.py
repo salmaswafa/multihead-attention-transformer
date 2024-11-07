@@ -76,11 +76,9 @@ def compute_perplexity(decoderLMmodel, data_loader, eval_iters=100):
 
 def main():
     
-    # TODO: change back
     # Set up argument parser
     part = int(getPartFromArgParser())
     print(f'Part: {part}')
-    # part = 3
     
     # Load dataset
     print("Loading data and creating tokenizer ...")
@@ -200,8 +198,11 @@ def part2(tokenizer, applyAlibi = False):
     # print the number of parameters in the model
     print(f'Decoder parameters: {sum(p.numel() for p in decoder.parameters())}')
     
+    runSanityChecks(tokenizer, decoder, globals.decoder_sentences, isDecoder = True)
+    
     # used to update the weights
     optimizer = optim.Adam(list(decoder.parameters()), lr=globals.learning_rate)
+    
     
     # for the language modeling task, you will iterate over the training data for a fixed number of iterations like this:
     for i, (xb, yb) in enumerate(train_LM_loader):
